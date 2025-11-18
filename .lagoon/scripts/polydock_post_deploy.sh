@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ####################################################
-# This script gets run by Polydock as a post deploy 
+# This script gets run by Polydock as a post deploy
 # over ssh. This is NOT a Lagoon post-deploy task.
 ###################################################
 
@@ -13,15 +13,15 @@ POLYDOCK_APP_IMAGE_DB_FILENAME="/app/web/sites/default/files/polydock/db-image"
 
 mkdir -p $POLYDOCK_TMP
 
-if [ -z "POLYDOCK_APP_IMAGE_URL" ]; then 
-	export POLYDOCK_APP_IMAGE_URL=$APP_IMAGE_URL_DEFAULT
+if [ -z "POLYDOCK_APP_IMAGE_URL" ]; then
+  export POLYDOCK_APP_IMAGE_URL=$APP_IMAGE_URL_DEFAULT
 fi;
 
 if [ ! -f "$LOCKFILE" ]; then
-  echo "This is the first time the script is running" 
+  echo "This is the first time the script is running"
   cd $POLYDOCK_TMP
   wget -O $POLYDOCK_APP_IMAGE_FILENAME -P $POLYDOCK_TMP $APP_IMAGE_URL_DEFAULT
-  
+
   echo "Extracing app image"
   tar -zxf $POLYDOCK_APP_IMAGE_FILENAME
 
@@ -30,13 +30,16 @@ if [ ! -f "$LOCKFILE" ]; then
 
   cd /app
 
-  if [ -f "$POLYDOCK_APP_IMAGE_DB_FILENAME" ]; then
-    echo "Loading database image"
-    cat $POLYDOCK_APP_IMAGE_DB_FILENAME | drush sql-cli
-    echo "Database image loaded"
-  else 
-    echo "There is no database image at: $POLYDOCK_APP_IMAGE_DB_FILENAME"
-  fi;
+    if [ -f "$POLYDOCK_APP_IMAGE_DB_FILENAME" ]; then
+        echo "Removing collation from DB ..."
+        sed -i 's/COLLATE=utf8mb3_uca1400_ai_ci.*;/;/g' $POLYDOCK_APP_IMAGE_DB_FILENAME
+        sed -i 's/COLLATE=utf8mb4_uca1400_ai_ci.*;/;/g' $POLYDOCK_APP_IMAGE_DB_FILENAME
+        echo "Loading database image"
+        cat $POLYDOCK_APP_IMAGE_DB_FILENAME | drush sql-cli
+        echo "Database image loaded"
+    else
+        echo "There is no database image at: $POLYDOCK_APP_IMAGE_DB_FILENAME"
+    fi;
 
   if [ ! -z "$AI_LLM_API_TOKEN" ]; then
     echo "Importing amazee Private AI keys"
@@ -57,9 +60,10 @@ if [ ! -f "$LOCKFILE" ]; then
       echo "Updating $POLYDOCK_GENERATED_APP_ADMIN_USERNAME password";
       drush upwd "$POLYDOCK_GENERATED_APP_ADMIN_USERNAME" "$POLYDOCK_GENERATED_APP_ADMIN_PASSWORD"
     fi;
+
   fi;
 
-  echo "Created $LOCKFILE to ensure we don't run more than once" 
+  echo "Created $LOCKFILE to ensure we don't run more than once"
   touch $LOCKFILE
 fi;
 

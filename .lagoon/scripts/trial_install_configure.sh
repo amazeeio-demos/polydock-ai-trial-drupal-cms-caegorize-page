@@ -14,12 +14,12 @@ else
   drush site:install -y
 
   # Install the provider.
-  echo "Installing the amazee.io AI provider"
+  echo "Installing the amazee.ai AI provider"
 
   drush recipe /app/web/recipes/ai_provider_amazeeio_recipe \
     --input=ai_provider_amazeeio_recipe.llm_host=$AI_LLM_API_URL \
     --input=ai_provider_amazeeio_recipe.llm_api_key=$AI_LLM_API_TOKEN
-  
+
   # Install the recipe.
   echo "Installing the amazee.io categorize page recipe"
   drush recipe /app/web/recipes/amazeeio_categorize_page
